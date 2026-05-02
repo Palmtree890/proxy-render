@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="icon" href="https://uploads.onecompiler.io/44emb7zye/44muje62g/web_proxy_logo.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Proxy</title>
+    <style>
+        :root {
+            --bg: #121212;
+            --nav: #1f1f1f;
+            --tab-active: #353535;
+            --text: #e8eaed;
+            --accent: #8ab4f8;
+            --panic: #ea4335;
+            --input-bg: #303134;
+            --border: #3c4043;
+            --surface: #202124;
+        }
+
+        body, html { 
+            margin: 0; 
+            padding: 0; 
+            height: 100%; 
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            background: var(--bg); 
+            color: var(--text); 
+            overflow: hidden; 
+        }
+
+        /* Top Tab Bar */
+        #tab-bar { 
+            display: flex; 
+            background: #000; 
+            padding: 8px 10px 0 10px; 
+            gap: 4px; 
+            align-items: center; 
+            border-bottom: 1px solid var(--border); 
+            height: 34px;
+        }
+
+        #tabs-container { 
+            display: flex; 
+            gap: 4px; 
+            overflow-x: auto; 
+            scrollbar-width: none; 
+            flex-grow: 1;
+        }
+
+        #tabs-container::-webkit-scrollbar { display: none; }
+
+        .tab { 
+            background: var(--surface); 
+            padding: 8px 16px; 
+            border-radius: 8px 8px 0 0; 
+            cursor: pointer; 
+            font-size: 12px; 
+            min-width: 120px; 
+            max-width: 180px;
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between;
+            transition: background 0.2s;
+            border: 1px solid transparent;
+            color: #9aa0a6;
+            white-space: nowrap;
+        }
+
+        .tab.active { 
+            background: var(--tab-active); 
+            color: white; 
+            border: 1px solid #444; 
+            border-bottom: none; 
+        }
+
+        .close-btn { 
+            margin-left: 8px; 
+            font-size: 16px; 
+            border-radius: 50%; 
+            width: 18px; 
+            height: 18px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+        }
+
+        .close-btn:hover { background: #5f6368; color: white; }
+
+        /* Navigation Bar */
+        #nav { 
+            background: var(--nav); 
+            padding: 8px 15px; 
+            display: flex; 
+            gap: 12px; 
+            align-items: center; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3); 
+        }
+
+        .address-bar {
+            display: flex;
+            flex-grow: 1;
+            background: var(--input-bg);
+            border-radius: 24px;
+            padding: 2px 16px;
+            align-items: center;
+            border: 1px solid transparent;
+        }
+
+        .address-bar:focus-within {
+            border-color: var(--accent);
+            background: #3c4043;
+        }
+
+        #engine { 
+            background: transparent; 
+            color: var(--accent); 
+            border: none; 
+            padding: 5px; 
+            outline: none; 
+            cursor: pointer; 
+            font-weight: bold; 
+            font-size: 12px; 
+        }
+
+        input { 
+            flex-grow: 1; 
+            background: transparent; 
+            border: none; 
+            color: white; 
+            padding: 10px 0; 
+            outline: none; 
+            font-size: 14px; 
+        }
+
+        .btn { 
+            border: none; 
+            padding: 8px 20px; 
+            border-radius: 20px; 
+            cursor: pointer; 
+            font-weight: 600; 
+            font-size: 13px; 
+        }
+
+        .btn-go { background: var(--accent); color: #202124; }
+        .btn-panic { background: var(--panic); color: white; }
+
+        /* Main Content Area */
+        #frames { width: 100%; height: calc(100vh - 105px); position: relative; }
+
+        .frame-container {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            display: none;
+            background: var(--bg);
+        }
+
+        .frame-container.active { display: block; }
+
+        iframe { width: 100%; height: 100%; border: none; background: white; }
+
+        /* Home Page */
+        .home-page {
+            width: 100%; height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg);
+            z-index: 10;
+        }
+
+        .home-logo {
+            width: 200px;
+            margin-bottom: 20px;
+            opacity: 0.9;
+        }
+
+        .home-search-bar {
+            width: 90%;
+            max-width: 580px;
+            background: var(--input-bg);
+            border-radius: 30px;
+            padding: 5px 25px;
+            display: flex;
+            align-items: center;
+            border: 1px solid var(--border);
+            transition: box-shadow 0.2s;
+        }
+
+        .home-search-bar:hover {
+            background: #3c4043;
+            box-shadow: 0 1px 6px rgba(0,0,0,0.3);
+            border-color: transparent;
+        }
+
+        .home-search-bar input {
+            font-size: 16px;
+            padding: 15px 0;
+        }
+
+        .shortcuts-grid {
+            display: flex;
+            gap: 24px;
+            margin-top: 40px;
+            flex-wrap: wrap;
+            justify-content: center;
+            max-width: 800px;
+        }
+
+        .shortcut {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            width: 80px;
+            position: relative;
+        }
+
+        .shortcut-icon {
+            width: 48px;
+            height: 48px;
+            background: var(--surface);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            transition: background 0.2s;
+            color: var(--accent);
+            font-weight: bold;
+        }
+
+        .shortcut:hover .shortcut-icon { background: #35363a; }
+        .shortcut-text { font-size: 12px; color: var(--text); text-align: center; overflow: hidden; text-overflow: ellipsis; width: 100%; white-space: nowrap; }
+
+        .edit-shortcut {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #444;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 10px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .shortcut:hover .edit-shortcut { display: flex; }
+
+        .add-shortcut-btn {
+            width: 48px;
+            height: 48px;
+            border: 2px dashed var(--border);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: var(--border);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .add-shortcut-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .utility-links { display: flex; gap: 15px; margin-left: 10px; font-size: 12px; }
+        .link { color: #34a853; cursor: pointer; text-decoration: none; }
+
+        /* Modal / Menu Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            z-index: 100;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            width: 320px;
+        }
+
+        .modal h3 { margin-top: 0; font-size: 16px; color: var(--accent); }
+        .modal-btn { 
+            width: 100%; 
+            padding: 10px; 
+            margin-bottom: 8px; 
+            background: #303134; 
+            border: 1px solid #444; 
+            color: white; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            text-align: left;
+            font-size: 13px;
+        }
+        .modal-btn:hover { background: #3c4043; }
+        .modal-input {
+            width: calc(100% - 16px);
+            background: #121212;
+            border: 1px solid #444;
+            color: white;
+            padding: 8px;
+            margin-bottom: 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        #modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 99;
+        }
+    </style>
+</head>
+<body>
+
+<div id="tab-bar">
+    <div id="tabs-container"></div>
+    <div class="utility-links">
+        <span class="link" onclick="createNewTab()">+ New Tab</span>
+        <span class="link" style="color: #fbbc04" onclick="showModal('cloak-modal')">Cloak Options</span>
+    </div>
+</div>
+
+<div id="nav">
+    <div class="address-bar">
+        <select id="engine">
+            <option value="https://www.google.com/search?q=">Google</option>
+            <option value="https://duckduckgo.com/?q=">DuckDuckGo</option>
+            <option value="https://searxng.site/search?q=">SearXNG</option>
+            <option value="https://www.startpage.com/do/search?query=">Startpage</option>
+        </select>
+        <input type="text" id="url-input" placeholder="Search or type a URL" onkeydown="if(event.key==='Enter') navigate()">
+    </div>
+    <button class="btn btn-go" onclick="navigate()">Go</button>
+    <button class="btn btn-panic" onclick="panic()">Panic</button>
+</div>
+
+<div id="frames"></div>
+
+<div id="modal-overlay" onclick="hideAllModals()"></div>
+
+<!-- Cloak Settings Modal -->
+<div id="cloak-modal" class="modal">
+    <h3>Cloak Settings</h3>
+    <p style="font-size: 11px; color: #9aa0a6; margin-bottom: 15px;">Choose what the new tab will look like:</p>
+    <button class="modal-btn" onclick="applyCloak('My Drive - Google Drive', 'https://ssl.gstatic.com/docs/doclist/images/drive_2022q3_32dp.png')">Google Drive</button>
+    <button class="modal-btn" onclick="applyCloak('Classes', 'https://www.gstatic.com/classroom/favicon.png')">Google Classroom</button>
+    <button class="modal-btn" onclick="applyCloak('Dashboard', 'https://canvas.instructure.com/favicon.ico')">Canvas</button>
+    
+    <div style="border-top: 1px solid #444; margin: 10px 0; padding-top: 10px;">
+        <input type="text" id="custom-title" class="modal-input" placeholder="Custom Title">
+        <input type="text" id="custom-icon" class="modal-input" placeholder="Custom Icon URL">
+        <button class="btn btn-go" style="width:100%; border-radius: 6px;" onclick="applyCustomCloak()">Launch Custom</button>
+    </div>
+    <button class="link" style="display:block; width:100%; text-align:center; margin-top:10px; color: #ea4335;" onclick="hideAllModals()">Cancel</button>
+</div>
+
+<!-- Shortcut Editor Modal -->
+<div id="shortcut-modal" class="modal">
+    <h3 id="shortcut-modal-title">Edit Shortcut</h3>
+    <input type="text" id="shortcut-name" class="modal-input" placeholder="Name">
+    <input type="text" id="shortcut-url" class="modal-input" placeholder="URL (https://...)">
+    <div style="display: flex; gap: 10px; margin-top: 10px;">
+        <button class="btn btn-go" style="flex: 1; border-radius: 6px;" onclick="saveShortcut()">Save</button>
+        <button class="btn btn-panic" style="flex: 1; border-radius: 6px;" id="delete-shortcut-btn" onclick="deleteShortcut()">Delete</button>
+    </div>
+    <button class="link" style="display:block; width:100%; text-align:center; margin-top:10px; color: #9aa0a6;" onclick="hideAllModals()">Cancel</button>
+</div>
+
+<script>
+    // REPLACE THIS WITH YOUR HYBRID CLOUDFLARE WORKER URL
+    const PROXY = ""/;
+
+    let tabs = [];
+    let activeTabId = null;
+    let editingShortcutIndex = null;
+
+    // Default shortcuts
+    let shortcuts = [
+        { name: 'Google', url: 'https://google.com' },
+        { name: 'YouTube', url: 'https://youtube.com' },
+        { name: 'Discord', url: 'https://discord.com' }
+    ];
+
+    // --- Service Worker Registration ---
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            // Registering with the proxy origin to ensure JS interception works
+            navigator.serviceWorker.register('/sw.js?proxyOrigin=' + encodeURIComponent(window.location.origin))
+                .then(reg => console.log('Service Worker Registered'))
+                .catch(err => console.log('Service Worker Registration Failed', err));
+        });
+    }
+
+    function loadShortcuts() {
+        const saved = localStorage.getItem('proxy-shortcuts');
+        if (saved) {
+            shortcuts = JSON.parse(saved);
+        }
+    }
+
+    function saveShortcutsToStorage() {
+        localStorage.setItem('proxy-shortcuts', JSON.stringify(shortcuts));
+        tabs.forEach(tab => {
+            const grid = document.getElementById(`shortcuts-${tab.id}`);
+            if (grid) renderShortcuts(tab.id);
+        });
+    }
+
+    function createNewTab() {
+        const id = 'tab-' + Date.now();
+        tabs.push({ id, state: 'home', url: '' });
+
+        const tabEl = document.createElement('div');
+        tabEl.className = 'tab';
+        tabEl.id = 'btn-' + id;
+        tabEl.onclick = () => switchTab(id);
+        tabEl.innerHTML = `<span class="tab-title">New Tab</span><span class="close-btn" onclick="closeTab(event, '${id}')">×</span>`;
+        document.getElementById('tabs-container').appendChild(tabEl);
+
+        const container = document.createElement('div');
+        container.className = 'frame-container';
+        container.id = 'cont-' + id;
+        
+        container.innerHTML = `
+            <div class="home-page" id="home-${id}">
+                <img src="https://uploads.onecompiler.io/44emb7zye/44muje62g/web_proxy_logo_2.png" class="home-logo">
+                <div class="home-search-bar">
+                    <input type="text" placeholder="Search or type a URL" onkeydown="if(event.key==='Enter') quickSearch(this.value, '${id}')">
+                </div>
+                <div class="shortcuts-grid" id="shortcuts-${id}"></div>
+            </div>
+            <iframe id="ifr-${id}" style="display:none"></iframe>
+        `;
+        
+        document.getElementById('frames').appendChild(container);
+        renderShortcuts(id);
+        switchTab(id);
+    }
+
+    function renderShortcuts(tabId) {
+        const grid = document.getElementById(`shortcuts-${tabId}`);
+        if (!grid) return;
+        grid.innerHTML = '';
+        
+        shortcuts.forEach((s, index) => {
+            const div = document.createElement('div');
+            div.className = 'shortcut';
+            div.innerHTML = `
+                <div class="shortcut-icon" onclick="quickSearch('${s.url}', '${tabId}')">${s.name.charAt(0).toUpperCase()}</div>
+                <div class="shortcut-text">${s.name}</div>
+                <div class="edit-shortcut" onclick="openShortcutEditor(${index}, event)">✎</div>
+            `;
+            grid.appendChild(div);
+        });
+
+        if (shortcuts.length < 10) {
+            const addBtn = document.createElement('div');
+            addBtn.className = 'add-shortcut-btn';
+            addBtn.innerHTML = '+';
+            addBtn.onclick = () => openShortcutEditor(null);
+            grid.appendChild(addBtn);
+        }
+    }
+
+    function switchTab(id) {
+        activeTabId = id;
+        document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.frame-container').forEach(el => el.classList.remove('active'));
+        
+        const btn = document.getElementById('btn-' + id);
+        const cont = document.getElementById('cont-' + id);
+        if(btn) btn.classList.add('active');
+        if(cont) cont.classList.add('active');
+
+        const currentTab = tabs.find(t => t.id === id);
+        if (currentTab) {
+            document.getElementById('url-input').value = currentTab.url || "";
+        }
+    }
+
+    function closeTab(event, id) {
+        event.stopPropagation();
+        tabs = tabs.filter(t => t.id !== id);
+        const btn = document.getElementById('btn-' + id);
+        const cont = document.getElementById('cont-' + id);
+        if(btn) btn.remove();
+        if(cont) cont.remove();
+
+        if (activeTabId === id) {
+            if (tabs.length > 0) switchTab(tabs[tabs.length - 1].id);
+            else createNewTab();
+        }
+    }
+
+    function quickSearch(val, id) {
+        const input = document.getElementById('url-input');
+        input.value = val;
+        navigate();
+    }
+
+    function navigate() {
+        if (!activeTabId) return;
+        const val = document.getElementById('url-input').value.trim();
+        const engine = document.getElementById('engine').value;
+        if (!val) return;
+
+        let targetUrl = (val.includes('.') && !val.includes(' ')) ? 
+                        (val.startsWith('http') ? val : 'https://' + val) : 
+                        engine + encodeURIComponent(val);
+        
+        let cleanProxy = PROXY.trim();
+        if (!cleanProxy.startsWith('http')) cleanProxy = 'https://' + cleanProxy;
+        if (cleanProxy.endsWith('/')) cleanProxy = cleanProxy.slice(0, -1);
+        
+        const finalUrl = cleanProxy + "/?id=" + btoa(targetUrl);
+        
+        const tabObj = tabs.find(t => t.id === activeTabId);
+        if (tabObj) {
+            tabObj.url = val;
+            tabObj.state = 'web';
+        }
+
+        const homeDiv = document.getElementById(`home-${activeTabId}`);
+        const ifr = document.getElementById(`ifr-${activeTabId}`);
+        if(homeDiv) homeDiv.style.display = 'none';
+        if(ifr) {
+            ifr.style.display = 'block';
+            ifr.src = finalUrl;
+        }
+        
+        let label = val.includes('.') ? val.split('.')[0].replace('https://', '').replace('www.', '') : val;
+        const btnTitle = document.querySelector(`#btn-${activeTabId} .tab-title`);
+        if(btnTitle) btnTitle.innerText = label;
+    }
+
+    // --- Modal Logic ---
+
+    function showModal(modalId) {
+        document.getElementById('modal-overlay').style.display = 'block';
+        document.getElementById(modalId).style.display = 'block';
+    }
+
+    function hideAllModals() {
+        document.getElementById('modal-overlay').style.display = 'none';
+        document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
+    }
+
+    // --- Shortcut Logic ---
+
+    function openShortcutEditor(index, event) {
+        if (event) event.stopPropagation();
+        editingShortcutIndex = index;
+        
+        const title = document.getElementById('shortcut-modal-title');
+        const nameInput = document.getElementById('shortcut-name');
+        const urlInput = document.getElementById('shortcut-url');
+        const delBtn = document.getElementById('delete-shortcut-btn');
+
+        if (index !== null) {
+            title.innerText = "Edit Shortcut";
+            nameInput.value = shortcuts[index].name;
+            urlInput.value = shortcuts[index].url;
+            delBtn.style.display = 'block';
+        } else {
+            title.innerText = "Add Shortcut";
+            nameInput.value = "";
+            urlInput.value = "https://";
+            delBtn.style.display = 'none';
+        }
+        
+        showModal('shortcut-modal');
+    }
+
+    function saveShortcut() {
+        const name = document.getElementById('shortcut-name').value.trim();
+        const url = document.getElementById('shortcut-url').value.trim();
+        if (!name || !url) return alert("Please enter both a name and a URL.");
+        if (editingShortcutIndex !== null) shortcuts[editingShortcutIndex] = { name, url };
+        else shortcuts.push({ name, url });
+        saveShortcutsToStorage();
+        hideAllModals();
+    }
+
+    function deleteShortcut() {
+        if (editingShortcutIndex !== null) {
+            shortcuts.splice(editingShortcutIndex, 1);
+            saveShortcutsToStorage();
+            hideAllModals();
+        }
+    }
+
+    // --- Enhanced Cloaking Logic ---
+    function applyCustomCloak() {
+        const title = document.getElementById('custom-title').value || "My Drive - Google Drive";
+        const icon = document.getElementById('custom-icon').value || "https://ssl.gstatic.com/docs/doclist/images/drive_2022q3_32dp.png";
+        applyCloak(title, icon);
+    }
+
+    function applyCloak(title, iconUrl) {
+        hideAllModals();
+        try {
+            const win = window.open('about:blank', '_blank');
+            if (!win) return alert("Popup blocked! Enable popups to use Cloaking.");
+            
+            // We write a full HTML document into the about:blank window
+            // This allows the iframe inside to retain the origin and Service Worker compatibility
+            const doc = win.document;
+            doc.title = title;
+            const link = doc.createElement('link');
+            link.rel = 'icon'; link.href = iconUrl;
+            doc.head.appendChild(link);
+            
+            // Create a fullscreen iframe that points back to this page
+            const iframe = doc.createElement('iframe');
+            Object.assign(iframe.style, { 
+                width: "100%", height: "100%", border: "none", 
+                position: "fixed", top: "0", left: "0", 
+                margin: "0", padding: "0", overflow: "hidden" 
+            });
+            
+            // Pointing to current URL allows the Service Worker to stay active
+            iframe.src = window.location.href; 
+            
+            doc.body.style.margin = "0";
+            doc.body.style.padding = "0";
+            doc.body.style.overflow = "hidden";
+            doc.body.appendChild(iframe);
+            
+            // Redirect the original tab to something safe
+            window.location.replace("https://google.com");
+        } catch (e) { console.error(e); }
+    }
+
+    function panic() { window.location.href = "https://classroom.google.com/h"; }
+    window.onkeydown = (e) => { if(e.key === 'Escape') panic(); };
+
+    window.onload = () => {
+        loadShortcuts();
+        createNewTab();
+    };
+</script>
+</body>
+</html>
