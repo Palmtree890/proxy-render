@@ -2,7 +2,7 @@ import { serve } from '@hono/node-server';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { serveStatic } from '@hono/node-server/serve-static'; // Helper for files
-import { HTMLRewriter } from 'node-html-rewriter';
+import { HTMLRewriter } from 'html-rewriter-wasm';
 
 const app = new Hono();
 
